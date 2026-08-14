@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PeakFuelling | Meal Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-hero: #152a1e;
+      --bg-black: #070707;
+      --bg-card: #26493a;
+      --bg-mid: #1b3526;
+      --cream: #f0ebe0;
+      --cream-dim: rgba(240,235,224,.15);
+      --cream-muted: rgba(240,235,224,.55);
+      --cream-faint: rgba(240,235,224,.06);
+      --line: rgba(240,235,224,.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-black);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      height: 100dvh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--bg-hero);
+      border-bottom: 1px solid var(--line);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .header-wordmark {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 0.08em;
+      color: var(--cream);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .header-pipe {
+      width: 1px;
+      height: 22px;
+      background: var(--line);
+      margin: 0 16px;
+      flex-shrink: 0;
+    }
+
+    .header-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cream-muted);
+      flex: 1;
+    }
+
+    .home-btn {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--cream-muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .home-btn.visible { display: flex; }
+    .home-btn:hover { border-color: var(--cream-muted); color: var(--cream); }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 3px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--cream-dim); border-radius: 2px; }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: fadeUp 0.2s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    .avatar.ai   { background: var(--bg-card); color: var(--cream); }
+    .avatar.user { background: var(--cream); color: var(--bg-hero); }
+
+    .bubble {
+      max-width: 78%;
+      padding: 14px 18px;
+      border-radius: 2px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .bubble.ai {
+      background: var(--bg-card);
+      color: var(--cream);
+      border-bottom-left-radius: 0;
+    }
+
+    .bubble.user {
+      background: var(--cream);
+      color: var(--bg-hero);
+      border-bottom-right-radius: 0;
+      font-weight: 500;
+    }
+
+    .bubble p { margin-bottom: 10px; }
+    .bubble p:last-child { margin-bottom: 0; }
+
+    .bubble .meal-heading {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.1em;
+      color: var(--cream);
+      margin: 18px 0 6px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+
+    .bubble .meal-heading:first-child { margin-top: 0; }
+
+    .bubble strong {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+
+    .bubble.user strong { color: var(--bg-hero); text-transform: none; font-size: 14px; }
+    .bubble ul, .bubble ol { padding-left: 20px; margin-bottom: 10px; }
+    .bubble li { margin-bottom: 5px; line-height: 1.6; }
+
+    .footer-tag {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-muted);
+      line-height: 1.5;
+    }
+
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 2px;
+    }
+
+    .typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cream-muted);
+      animation: dot 1.3s infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.18s; }
+    .typing span:nth-child(3) { animation-delay: 0.36s; }
+
+    @keyframes dot {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .quick-replies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 0 4px 46px;
+      animation: fadeUp 0.2s ease forwards;
+    }
+
+    .chip {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--cream-muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.18s, color 0.18s, background 0.18s;
+      white-space: nowrap;
+    }
+
+    .chip:hover { border-color: var(--cream-muted); color: var(--cream); background: var(--cream-faint); }
+
+    .input-area {
+      background: var(--bg-hero);
+      border-top: 1px solid var(--line);
+      padding: 16px 24px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .input-wrap {
+      flex: 1;
+      background: var(--bg-mid);
+      border-radius: 2px;
+      border: 1px solid var(--line);
+      transition: border-color 0.2s;
+    }
+
+    .input-wrap:focus-within { border-color: rgba(240,235,224,.35); }
+
+    textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 13px 16px;
+      resize: none;
+      max-height: 140px;
+      min-height: 48px;
+      line-height: 1.5;
+      display: block;
+    }
+
+    textarea::placeholder { color: var(--cream-muted); font-size: 13px; }
+
+    .send-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 2px;
+      background: var(--cream);
+      color: var(--bg-hero);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.18s;
+    }
+
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .send-btn:not(:disabled):hover { opacity: 0.85; }
+
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 48px 24px 24px;
+      flex: 1;
+    }
+
+    .welcome-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cream-muted);
+      margin-bottom: 12px;
+    }
+
+    .welcome-heading {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(42px, 8vw, 64px);
+      letter-spacing: 0.05em;
+      line-height: 0.95;
+      color: var(--cream);
+      margin-bottom: 16px;
+    }
+
+    .welcome-sub {
+      font-size: 14px;
+      color: var(--cream-muted);
+      max-width: 360px;
+      line-height: 1.65;
+      margin-bottom: 36px;
+    }
+
+    .divider {
+      width: 32px;
+      height: 1px;
+      background: var(--line);
+      margin: 0 auto 28px;
+    }
+
+    .starter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .starter-btn {
+      background: var(--cream-faint);
+      border: 1px solid var(--line);
+      color: var(--cream-muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 14px 16px;
+      border-radius: 2px;
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.4;
+      transition: border-color 0.18s, color 0.18s, background 0.18s;
+    }
+
+    .starter-btn:hover { border-color: var(--cream-muted); color: var(--cream); background: var(--cream-dim); }
+
+    @media (max-width: 480px) {
+      .header { padding: 0 16px; }
+      .messages { padding: 20px 16px 12px; }
+      .input-area { padding: 12px 16px; }
+      .starter-grid { grid-template-columns: 1fr; }
+      .bubble { max-width: 88%; }
+      .quick-replies { padding-left: 46px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-wordmark">PeakFuelling</div>
+    <div class="header-pipe"></div>
+    <div class="header-label">Meal Planner</div>
+    <button class="home-btn" id="homeBtn" onclick="resetChat()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Start Over
+    </button>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-eyebrow">PeakFuelling Client Tool</div>
+      <div class="welcome-heading">Your Match<br>Week Meals.<br>Sorted.</div>
+      <p class="welcome-sub">Tell me your game day. I'll build your meals around it — timed to kick-off, built around your load.</p>
+      <div class="divider"></div>
+      <div class="starter-grid">
+        <button class="starter-btn" onclick="sendMessage('Build my meals for today')">Build my meals for today</button>
+        <button class="starter-btn" onclick="sendMessage('I\'ve got a game Saturday')">I've got a game Saturday</button>
+        <button class="starter-btn" onclick="sendMessage('Use what\'s in my fridge')">Use what's in my fridge</button>
+        <button class="starter-btn" onclick="sendMessage('Double game week — sort my meals')">Double game week — sort my meals</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="input" placeholder="Type your answer..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    </div>
+    <button class="send-btn" id="sendBtn" onclick="sendFromInput()" disabled aria-label="Send">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are the PeakFuelling Meal Planner, a football nutrition tool built exclusively for paying clients of PeakFuelling. Your job is to build simple, practical, effective meals timed around their match week.
+
+CORE PHILOSOPHY — never break this:
+Nutrition does not need to be glamorous or overcomplicated. The default is always proper whole food meals cooked from scratch — chicken, rice, pasta, fish, vegetables, traditional healthy footballer food. Never suggest something just because it sounds impressive. Never make meals pretentious or overly complex. Whole foods prioritised, real ingredients, nothing that requires a culinary degree.
+
+Quick shortcut meals (microwave rice, tinned fish, assembly meals) are only suggested when the player has indicated they are short on time — under 15 minutes. If they have 20 minutes or more, always default to a proper cooked meal. The goal is meals that taste good, hit the targets, and that a footballer would actually enjoy eating.
+
+Meal complexity by cooking ability:
+- Beginner: straightforward recipes, one or two pans, familiar techniques
+- Intermediate: comfortable cooking from scratch, standard methods
+- Advanced: multi-component meals, longer prep fine
+
+Time available overrides cooking ability when it comes to shortcuts. A 20 minute beginner meal should still be a proper cooked meal, just a simple one.
+
+CRITICAL RULE: Ask ONE question at a time. Wait for the answer. Then move to the next. Never bundle questions. Never repeat information already given. If the answer to the next question is obvious from what they've already said, skip it and move on.
+
+QUESTION ORDER — one at a time, skip if already answered:
+
+Q1: "Single game week or double game week?"
+Q2: "What day is it today?"
+Q3: "What day is your game and what time is kick-off?" (double = both game days and times)
+Q4: "Do you have training today?" — if yes: "What day, what time does it start, and how long roughly?"
+Q5: "Are you over 18?"
+Q6: "What is your weight in kg and height in cm?"
+Q7: "Gender?"
+Q8: "Position — goalkeeper, defender, midfielder, forward or winger?"
+Q9: "How confident are you in the kitchen? Beginner, intermediate, or advanced?"
+Q10: "How much time have you got to cook today, and are you cooking for just yourself or others too? If others, how many?"
+Q11: "Do you have protein powder at home?"
+Q12: "Do you want a full meal plan with a shopping list, or tell me what you've got in and I'll work with that?"
+
+After Q12, build the plan immediately. No more questions.
+
+PROTEIN POWDER RULE: Only suggest protein powder in breakfast smoothies or post-match evening recovery meals. Never at lunch, never as a daytime snack, never mid-session.
+
+INTERNAL CALCULATIONS — never show maths unless asked.
+
+MD DAY CLASSIFICATION:
+- MD-4 or earlier: moderate CHO
+- MD-3: moderate-high CHO
+- MD-2: lighter session, begin reducing fibre
+- MD-1: carb load, high CHO, low fibre, low fat, easily digestible only
+- MD: match day, 4-2-1-0 Protocol
+- MD+1: recovery (default to starter)
+
+DOUBLE GAME WEEK: Upper end of all CHO ranges throughout.
+
+CALORIE TARGETS (per kg bodyweight):
+- Rest/light: x30-32
+- Light-moderate training: x33-36
+- Hard training: x37-40
+- MD-1: x40-42
+- Match day: x42-45
+- MD+1 starter: x36-40
+- MD+1 non-starter: x30-34
+
+POSITION:
+- Goalkeeper: lower end
+- Defender: lower-mid
+- Midfielder: upper end
+- Forward/Winger: mid to upper
+
+PROTEIN: 2.0g/kg daily, every day.
+
+CARBOHYDRATE TARGETS (Anderson et al. JSS 2022):
+MD-4+ light: Breakfast 0.5-1.0g/kg, Lunch 1.0g/kg, Snack 0.5-1.0g/kg, Dinner 1.0g/kg
+MD-4 75-80min: Breakfast 1.0g/kg, Lunch 1.5-2.0g/kg, Snack 0.5-1.0g/kg, Dinner 0.5-1.0g/kg
+MD-3 80-90min: Breakfast 1.0g/kg, Lunch 1.5-2.0g/kg, Snack 0.5-1.0g/kg, Dinner 0.5-1.0g/kg
+MD-2 <70min: Breakfast 0.5g/kg, Lunch 1.5-2.0g/kg, Snack 0.5-1.0g/kg, Dinner 0.5-1.0g/kg
+MD-1 <60min: Breakfast 2.0g/kg, During 60g/hr, Lunch 2.0g/kg, Snack 1.5g/kg, Dinner 2.0g/kg
+MD+1 Starter: Breakfast 2.0g/kg, During 60g/hr, Lunch 2.0g/kg, Snack 1.5g/kg, Dinner 2.0g/kg
+MD+1 Non-starter: Breakfast 0.5-1.0g/kg, Lunch 1.5-2.0g/kg, Snack 0.5-1.0g/kg, Dinner 0.5-1.0g/kg
+
+FAT: Fill remaining calories. Minimise on MD-1 and match day.
+
+On high CHO days always pair solid food with liquid CHO — large glass of OJ, apple juice or fruit smoothie. Never suggest excessive portions of solid carbs to hit targets.
+
+DURING TRAINING:
+- Over 18: sports drink + banana or gel
+- Under 18: Lucozade Sport + banana or dates. No gels, no caffeine, no supplements.
+
+4-2-1-0 PROTOCOL — match day only, work backwards from kick-off:
+- 4hrs: largest meal, 2.0g/kg CHO, lean protein, low fat, low fibre
+- 2hrs: easy carbs — toast with honey, banana, juice
+- 1hr: fast carbs only — banana, dates, rice cakes with honey, small juice
+- During (18+): gels 30-60g/hr, sports drink, water
+- During (under 18): sports drink, banana at half time, water
+- Post-match within 30-60min: 1.2g/kg CHO for 3hrs, protein across meals, fat fine
+
+PROTEIN SOURCES:
+MD-1 and match day pre-match: lean only — chicken breast, turkey, white fish. No salmon, red meat, eggs as main, full-fat dairy.
+All other days + post-match: salmon, steak, mince, eggs, full-fat dairy all fine. Post-match salmon and steak actively good.
+
+MEAL RULES — NEVER BREAK:
+
+BREAKFAST (breakfast food only, always):
+- Porridge with banana and honey
+- Scrambled or poached eggs on toast
+- Greek yoghurt with granola and fruit
+- Overnight oats with banana and honey
+- Smoothie with oats, banana, milk (+ protein powder if available — breakfast only)
+- Pancakes with honey and banana (MD-1/MD only)
+- Toast with peanut butter and banana
+- Weetabix or Shreddies with milk and fruit
+Never serve rice, pasta, stir fry or any dinner food at breakfast.
+
+LUNCH:
+- Chicken and rice bowl with veg
+- Pasta with tomato sauce and lean mince
+- Jacket potato with tuna and sweetcorn
+- Wrap with grilled chicken and salad (avoid MD-1)
+- Rice cakes with cottage cheese and turkey (lower CHO days)
+- Microwave rice with tinned tuna and sweetcorn (quick, valid, effective)
+
+DINNER:
+- Salmon with sweet potato mash and green beans (avoid MD-1)
+- Chicken stir fry with noodles and veg (avoid MD-1)
+- Beef and rice bowl with peppers and onions
+- Pasta with chicken and pesto
+- Turkey mince bolognese with pasta
+- Baked cod with new potatoes and broccoli (reduce broccoli MD-1)
+- Chicken and rice with tinned tomatoes (simple, quick, solid)
+- Protein powder smoothie with oats and banana (post-match evening only, if they have powder)
+
+SNACKS (only if targets need them):
+- Rice cakes with peanut butter
+- Banana and small handful of almonds
+- Greek yoghurt with honey
+- Oatcakes with cottage cheese
+- Medjool dates (MD-1/MD only)
+- White bread with honey or jam (MD-1/MD only)
+- OJ or apple juice as CHO top-up
+
+MD-1 AND MATCH DAY:
+- White rice, white pasta, white bread over wholegrain
+- No large portions of high-fibre veg
+- No heavy or fatty meals
+- No new or unfamiliar foods
+- Use liquid carbs to hit targets, not volume
+
+SHOPPING LIST: whole foods, budget-friendly, normal supermarket ingredients only. Name the ingredient, they choose the quality. Group as: Protein / Carbohydrates / Fruit and Veg / Dairy / Store Cupboard. Scale for number of people.
+
+FRIDGE ROUTE: build only from what they list. Same rules apply. If short on carbs on MD-1 or match day, flag it once simply.
+
+UNDER 18s: no supplements, no powder, no gels, no caffeine. Whole food swaps only.
+
+REDIRECT TO LIAM: full weekly plans, GPS data, injury, illness, supplement stacks, anything medical.
+
+End every completed meal plan with: "If you have any allergies or intolerances, let me know and I'll adjust."
+
+End EVERY response with: "Built by PeakFuelling. Your fully personalised match-week plan, GPS data integration, and direct access to Liam is what your Full 90 Formula subscription is for — make sure you're using it."`;
+
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const QUICK_REPLIES = [
+  { match: t => t.includes("single game week or double"), chips: ["Single game week", "Double game week"] },
+  { match: t => t.includes("what day is it today") && !t.includes("game"), chips: DAYS },
+  { match: t => t.includes("do you have training today"), chips: ["Yes, training today", "No training today"] },
+  { match: t => t.includes("over 18"), chips: ["Yes, over 18", "Under 18", "Cooking for someone under 18"] },
+  { match: t => t.includes("gender"), chips: ["Male", "Female"] },
+  { match: t => t.includes("goalkeeper") && t.includes("defender") && t.includes("midfielder"), chips: ["Goalkeeper", "Defender", "Midfielder", "Forward / Winger"] },
+  { match: t => t.includes("beginner") && t.includes("intermediate") && t.includes("advanced"), chips: ["Beginner", "Intermediate", "Advanced"] },
+  { match: t => t.includes("how much time") && t.includes("cook"), chips: ["Under 15 mins", "20-30 mins", "40+ mins", "No rush"] },
+  { match: t => t.includes("protein powder"), chips: ["Yes, I have protein powder", "No protein powder"] },
+  { match: t => t.includes("shopping list") && t.includes("fridge"), chips: ["Full plan + shopping list", "Use what's in my fridge"] },
+];
+
+function getChips(text) {
+  const t = text.toLowerCase();
+  for (const rule of QUICK_REPLIES) {
+    if (rule.match(t)) return rule.chips;
+  }
+  return [];
+}
+
+let messages = [];
+let loading = false;
+
+function formatAI(text) {
+  const footerMarker = "Built by PeakFuelling.";
+  let main = text, footer = null;
+  const fi = text.indexOf(footerMarker);
+  if (fi !== -1) { main = text.slice(0, fi).trim(); footer = text.slice(fi).trim(); }
+
+  let html = "";
+  const lines = main.split("\n");
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { i++; continue; }
+    if ((line.startsWith("**") && line.endsWith("**") && line.length > 4) || line.startsWith("## ") || line.startsWith("### ")) {
+      const content = line.replace(/^#+\s*/, "").replace(/^\*\*|\*\*$/g, "");
+      html += `<div class="meal-heading">${esc(content)}</div>`;
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      html += "<ul>";
+      while (i < lines.length && (lines[i].trim().startsWith("- ") || lines[i].trim().startsWith("* "))) {
+        html += `<li>${inline(lines[i].trim().slice(2))}</li>`; i++;
+      }
+      html += "</ul>"; continue;
+    } else if (/^\d+\.\s/.test(line)) {
+      html += "<ol>";
+      while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+        html += `<li>${inline(lines[i].trim().replace(/^\d+\.\s/, ""))}</li>`; i++;
+      }
+      html += "</ol>"; continue;
+    } else {
+      html += `<p>${inline(line)}</p>`;
+    }
+    i++;
+  }
+  if (footer) html += `<div class="footer-tag">${esc(footer)}</div>`;
+  return html;
+}
+
+function inline(t) { return esc(t).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>"); }
+function esc(t) { return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function scrollBottom() { const m = document.getElementById("messages"); m.scrollTop = m.scrollHeight; }
+
+function renderChips(text) {
+  const ex = document.getElementById("chipRow"); if (ex) ex.remove();
+  const chips = getChips(text); if (!chips.length) return;
+  const row = document.createElement("div");
+  row.className = "quick-replies"; row.id = "chipRow";
+  chips.forEach(c => {
+    const btn = document.createElement("button");
+    btn.className = "chip"; btn.textContent = c;
+    btn.onclick = () => sendMessage(c);
+    row.appendChild(btn);
+  });
+  document.getElementById("messages").appendChild(row);
+  scrollBottom();
+}
+
+function removeChips() { const ex = document.getElementById("chipRow"); if (ex) ex.remove(); }
+
+function addMessage(role, content) {
+  const welcome = document.getElementById("welcome"); if (welcome) welcome.remove();
+  document.getElementById("homeBtn").classList.add("visible");
+  const wrap = document.createElement("div"); wrap.className = `message ${role}`;
+  const av = document.createElement("div"); av.className = `avatar ${role === "user" ? "user" : "ai"}`;
+  av.textContent = role === "user" ? "YOU" : "PF";
+  const bubble = document.createElement("div"); bubble.className = `bubble ${role === "user" ? "user" : "ai"}`;
+  if (role === "user") { bubble.textContent = content; } else { bubble.innerHTML = formatAI(content); }
+  wrap.appendChild(av); wrap.appendChild(bubble);
+  document.getElementById("messages").appendChild(wrap);
+  scrollBottom();
+}
+
+function addTyping() {
+  const wrap = document.createElement("div"); wrap.className = "message ai"; wrap.id = "typing";
+  wrap.innerHTML = `<div class="avatar ai">PF</div><div class="bubble ai"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById("messages").appendChild(wrap); scrollBottom();
+}
+
+function removeTyping() { const t = document.getElementById("typing"); if (t) t.remove(); }
+
+async function sendMessage(text) {
+  text = text.trim(); if (!text || loading) return;
+  removeChips();
+  messages.push({ role: "user", content: text });
+  addMessage("user", text);
+  const inp = document.getElementById("input");
+  inp.value = ""; inp.style.height = "48px";
+  document.getElementById("sendBtn").disabled = true;
+  loading = true; addTyping();
+
+  try {
+    const res = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system: SYSTEM_PROMPT, messages })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const reply = data.content?.[0]?.text || "Something went wrong. Try again.";
+    messages.push({ role: "assistant", content: reply });
+    removeTyping(); addMessage("assistant", reply); renderChips(reply);
+  } catch(e) {
+    removeTyping();
+    const err = "Error: " + (e.message || "Connection issue. Try again.");
+    messages.push({ role: "assistant", content: err });
+    addMessage("assistant", err);
+  }
+  loading = false;
+}
+
+function sendFromInput() { sendMessage(document.getElementById("input").value); }
+function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendFromInput(); } }
+function autoResize(el) {
+  el.style.height = "48px";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+  document.getElementById("sendBtn").disabled = !el.value.trim();
+}
+
+function resetChat() {
+  messages = []; loading = false;
+  document.getElementById("messages").innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="welcome-eyebrow">PeakFuelling Client Tool</div>
+      <div class="welcome-heading">Your Match<br>Week Meals.<br>Sorted.</div>
+      <p class="welcome-sub">Tell me your game day. I'll build your meals around it — timed to kick-off, built around your load.</p>
+      <div class="divider"></div>
+      <div class="starter-grid">
+        <button class="starter-btn" onclick="sendMessage('Build my meals for today')">Build my meals for today</button>
+        <button class="starter-btn" onclick="sendMessage('I\\'ve got a game Saturday')">I've got a game Saturday</button>
+        <button class="starter-btn" onclick="sendMessage('Use what\\'s in my fridge')">Use what's in my fridge</button>
+        <button class="starter-btn" onclick="sendMessage('Double game week — sort my meals')">Double game week — sort my meals</button>
+      </div>
+    </div>`;
+  document.getElementById("homeBtn").classList.remove("visible");
+  const inp = document.getElementById("input");
+  inp.value = ""; inp.style.height = "48px";
+  document.getElementById("sendBtn").disabled = true;
+}
+</script>
+</body>
+</html>
